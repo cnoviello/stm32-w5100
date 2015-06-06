@@ -43,9 +43,28 @@ W5100_StatusTypeDef W5100_SocketInit(W5100_Socket_TypeDef *hsock) {
 		}
 
 	if(hsock->_socketnum <= 0x3) { // Found a free socket
+		uint16_t sockbaseaddr = SOCK0_BASE_ADDR + (hsock->_socketnum * SOCKn_REG_SIZE);
+		W5100_StatusTypeDef retval;
+
 		if (hsock->connmode == SOCK_MODE_CLIENT) {
 			if(hsock->srcportnum == 0x0)
 				hsock->srcportnum = rand();
+
+			//Set source port number
+			retval |= W5100_Write(hsock->hw5100, sockbaseaddr + Sn_PORT0, hsock->srcportnum >> 8);
+			retval |= W5100_Write(hsock->hw5100, sockbaseaddr + Sn_PORT0, hsock->srcportnum);
+
+			//Set destination IP
+			retval |= W5100_Write(hsock->hw5100, sockbaseaddr + Sn_DIPR0, hsock->destip[0]);
+			retval |= W5100_Write(hsock->hw5100, sockbaseaddr + Sn_DIPR1, hsock->destip[1]);
+			retval |= W5100_Write(hsock->hw5100, sockbaseaddr + Sn_DIPR2, hsock->destip[2]);
+			retval |= W5100_Write(hsock->hw5100, sockbaseaddr + Sn_DIPR3, hsock->destip[3]);
+
+			//Set destination port number
+			retval |= W5100_Write(hsock->hw5100, sockbaseaddr + Sn_DPORT0, hsock->destportnum >> 8);
+			retval |= W5100_Write(hsock->hw5100, sockbaseaddr + Sn_DPORT1, hsock->destportnum);
+
+			return retval;
 		}
 	}
 	return W5100_NOFREESOCK;
