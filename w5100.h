@@ -93,4 +93,9 @@ W5100_StatusTypeDef W5100_SetIP(W5100_Handle_TypeDef *hw5100);
 W5100_StatusTypeDef W5100_SetMAC(W5100_Handle_TypeDef *hw5100);
 W5100_StatusTypeDef W5100_SetNetMask(W5100_Handle_TypeDef *hw5100);
 
+#ifdef DEBUG
+void W5100_UART_Debug_Init(UART_HandleTypeDef *huart);
+void W5100_UART_Debug_Print(char *msg);
+#endif //#ifdef DEBUG
+
 #endif //#ifndef _W5100_STM32_H__

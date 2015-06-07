@@ -22,6 +22,23 @@ THE SOFTWARE.
 
 #include "w5100.h"
 
+#ifdef DEBUG
+#include "stm32f4xx_hal_uart.h"
+#include <string.h>
+
+UART_HandleTypeDef *ghuart;
+
+void W5100_UART_Debug_Init(UART_HandleTypeDef *huart) {
+	ghuart = huart;
+}
+
+void W5100_UART_Debug_Print(char *msg) {
+	 HAL_UART_Transmit(ghuart, (uint8_t*)msg, strlen(msg), 100);
+}
+
+#endif //#ifdef DEBUG
+
+
 W5100_StatusTypeDef W5100_GetGWIP(W5100_Handle_TypeDef *hw5100, uint8_t *ip) {
 	W5100_StatusTypeDef retval;
 
@@ -63,6 +80,9 @@ W5100_StatusTypeDef W5100_Init(W5100_Handle_TypeDef *hw5100) {
     		 W5100_SetNetMask(hw5100) &&
 			 W5100_SetGWIP(hw5100) &&
 			 W5100_SetMAC(hw5100);
+
+    retval |= W5100_Write(hw5100, 0x001A, 0x55); //FIXME: MEMORIA SOCKET, CAMBIARE
+    retval |= W5100_Write(hw5100, 0x001B, 0x55); //FIXME: MEMORIA SOCKET, CAMBIARE
 
     return retval;
 }

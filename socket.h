@@ -63,6 +63,8 @@ THE SOFTWARE.
 #define Sn_DPORT0 	0x0010 //DEST PORT
 #define Sn_DPORT1 	0x0011
 
+#define Sn_TX_FSR0	0x0020 //Socket 0 TX Free Size
+#define Sn_TX_FSR1	0x0021
 
 typedef enum _W5100_SocketStatus {
 	BUS_ERROR			= -1,
@@ -89,6 +91,15 @@ typedef enum _W5100_SockConnMode_TypeDef {
 	SOCK_MODE_SERVER	= 0x1,
 } W5100_SockConnMode_TypeDef;
 
+typedef enum _W5100_SockProto_TypeDef {
+	SOCK_PROTO_TCP		= 0x1,
+	SOCK_PROTO_UDP		= 0x2,
+	SOCK_PROTO_IPRAW	= 0x3,
+	SOCK_PROTO_MACRAW	= 0x4,
+	SOCK_PROTO_PPoE		= 0x5,
+} W5100_SockProto_TypeDef;
+
+
 typedef struct _W5100_Socket_TypeDef {
 	W5100_Handle_TypeDef *hw5100;
 	uint8_t _socketnum; 					// W5100 socket number. This automatically computer by library
@@ -96,14 +107,18 @@ typedef struct _W5100_Socket_TypeDef {
 	uint16_t destportnum;
 	uint16_t srcportnum;
 	uint8_t *destip;
+	uint8_t proto;
 
 } W5100_Socket_TypeDef;
 
 /* Private functions */
+W5100_StatusTypeDef __W5100_SocketFreeTXMEM(W5100_Socket_TypeDef *hsock, uint16_t *fmem);
 W5100_SocketStatus_TypeDef __W5100_SocketStatus(W5100_Handle_TypeDef *hw5100, uint8_t socknum);
+W5100_StatusTypeDef __W5100_SocketOpen(W5100_Socket_TypeDef *hsock);
 
+W5100_StatusTypeDef W5100_SocketConnect(W5100_Socket_TypeDef *hsock);
 W5100_StatusTypeDef W5100_SocketInit(W5100_Socket_TypeDef *hsock);
-W5100_StatusTypeDef W5100_SocketGetStatus(W5100_Socket_TypeDef *hsock, W5100_SocketStatus_TypeDef *status);
-W5100_StatusTypeDef W5100_SocketOpen(W5100_Socket_TypeDef *hsock);
+W5100_StatusTypeDef W5100_SocketStatus(W5100_Socket_TypeDef *hsock, W5100_SocketStatus_TypeDef *status);
+
 
 #endif //#ifndef _W5100_STM32_SOCKET_H__
