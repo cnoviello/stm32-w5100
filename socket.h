@@ -44,24 +44,19 @@ THE SOFTWARE.
 #define SOCK_CMD_SEND_KEEP	0x22
 #define SOCK_CMD_RECV		0x40
 
-#define Sn_MR	 	0x0000 //MODE
-#define Sn_CR	 	0x0001 //COMMAND
-#define Sn_IR	 	0x0002 //INTERRUPT
-#define Sn_SR	 	0x0003 //STATUS
-#define Sn_PORT0 	0x0004 //SOURCE PORT
-#define Sn_PORT1 	0x0005
+#define Sn_MR(s)	(SOCK0_BASE_ADDR + s*SOCKn_REG_SIZE + 0x0000) //Sn_MR register - Mode register
+#define Sn_CR(s)	(SOCK0_BASE_ADDR + s*SOCKn_REG_SIZE + 0x0001) //Sn_CR register - Command register
+#define Sn_IR(s)	(SOCK0_BASE_ADDR + s*SOCKn_REG_SIZE + 0x0002) //Sn_IR register - Socket interrupt register
+#define Sn_SR(s)	(SOCK0_BASE_ADDR + s*SOCKn_REG_SIZE + 0x0003) //Sn_SR register - Socket status register
+#define Sn_PORT0(s)	(SOCK0_BASE_ADDR + s*SOCKn_REG_SIZE + 0x0004) //Sn_PORT0 register - Source port register
 #define Sn_DHAR0 	0x0006 //DEST MAC ADDR
 #define Sn_DHAR1 	0x0007
 #define Sn_DHAR2 	0x0008
 #define Sn_DHAR3 	0x0009
 #define Sn_DHAR4 	0x000A
 #define Sn_DHAR5 	0x000B
-#define Sn_DIPR0 	0x000C //DEST IP
-#define Sn_DIPR1 	0x000D
-#define Sn_DIPR2 	0x000E
-#define Sn_DIPR3 	0x000F
-#define Sn_DPORT0 	0x0010 //DEST PORT
-#define Sn_DPORT1 	0x0011
+#define Sn_DIPR0(s)	(SOCK0_BASE_ADDR + s*SOCKn_REG_SIZE + 0x000C) //Sn_DIPR0 register - Destination IP register
+#define Sn_DPORT0(s)	(SOCK0_BASE_ADDR + s*SOCKn_REG_SIZE + 0x0010) //Sn_DPORT0 register - Destination Port register
 
 #define Sn_TX_FSR0	0x0020 //Socket 0 TX Free Size
 #define Sn_TX_FSR1	0x0021
@@ -118,6 +113,7 @@ W5100_StatusTypeDef __W5100_SocketOpen(W5100_Socket_TypeDef *hsock);
 
 W5100_StatusTypeDef W5100_SocketConnect(W5100_Socket_TypeDef *hsock);
 W5100_StatusTypeDef W5100_SocketInit(W5100_Socket_TypeDef *hsock);
+W5100_StatusTypeDef W5100_SocketInterruptStatus(W5100_Socket_TypeDef *hsock);
 W5100_StatusTypeDef W5100_SocketStatus(W5100_Socket_TypeDef *hsock, W5100_SocketStatus_TypeDef *status);
 
 
