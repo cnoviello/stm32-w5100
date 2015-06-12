@@ -44,22 +44,30 @@ THE SOFTWARE.
 #define SOCK_CMD_SEND_KEEP	0x22
 #define SOCK_CMD_RECV		0x40
 
-#define Sn_MR(s)	(SOCK0_BASE_ADDR + s*SOCKn_REG_SIZE + 0x0000) //Sn_MR register - Mode register
-#define Sn_CR(s)	(SOCK0_BASE_ADDR + s*SOCKn_REG_SIZE + 0x0001) //Sn_CR register - Command register
-#define Sn_IR(s)	(SOCK0_BASE_ADDR + s*SOCKn_REG_SIZE + 0x0002) //Sn_IR register - Socket interrupt register
-#define Sn_SR(s)	(SOCK0_BASE_ADDR + s*SOCKn_REG_SIZE + 0x0003) //Sn_SR register - Socket status register
-#define Sn_PORT0(s)	(SOCK0_BASE_ADDR + s*SOCKn_REG_SIZE + 0x0004) //Sn_PORT0 register - Source port register
-#define Sn_DHAR0 	0x0006 //DEST MAC ADDR
-#define Sn_DHAR1 	0x0007
-#define Sn_DHAR2 	0x0008
-#define Sn_DHAR3 	0x0009
-#define Sn_DHAR4 	0x000A
-#define Sn_DHAR5 	0x000B
-#define Sn_DIPR0(s)	(SOCK0_BASE_ADDR + s*SOCKn_REG_SIZE + 0x000C) //Sn_DIPR0 register - Destination IP register
-#define Sn_DPORT0(s)	(SOCK0_BASE_ADDR + s*SOCKn_REG_SIZE + 0x0010) //Sn_DPORT0 register - Destination Port register
+#define Sn_MR(s)	 (SOCK0_BASE_ADDR + (s*SOCKn_REG_SIZE) + 0x0000) //Sn_MR register - Mode register
+#define Sn_CR(s)	 (SOCK0_BASE_ADDR + (s*SOCKn_REG_SIZE) + 0x0001) //Sn_CR register - Command register
+#define Sn_IR(s)	 (SOCK0_BASE_ADDR + (s*SOCKn_REG_SIZE) + 0x0002) //Sn_IR register - Socket interrupt register
+#define Sn_SR(s)	 (SOCK0_BASE_ADDR + (s*SOCKn_REG_SIZE) + 0x0003) //Sn_SR register - Socket status register
+#define Sn_PORT0(s)  (SOCK0_BASE_ADDR + (s*SOCKn_REG_SIZE) + 0x0004) //Sn_PORT0 register - Source port register
+#define Sn_DHAR0 	 0x0006 //DEST MAC ADDR
+#define Sn_DHAR1 	 0x0007
+#define Sn_DHAR2 	 0x0008
+#define Sn_DHAR3 	 0x0009
+#define Sn_DHAR4 	 0x000A
+#define Sn_DHAR5 	 0x000B
+#define Sn_DIPR0(s)	 (SOCK0_BASE_ADDR + (s*SOCKn_REG_SIZE) + 0x000C) //Sn_DIPR0 register - Destination IP register
+#define Sn_DPORT0(s) (SOCK0_BASE_ADDR + (s*SOCKn_REG_SIZE) + 0x0010) //Sn_DPORT0 register - Destination Port register
+#define Sn_TX_FSR0(s)(SOCK0_BASE_ADDR + (s*SOCKn_REG_SIZE) + 0x0020) //Sn_TX_FSR0 register - Socket n TX Free Size
+#define Sn_TX_RD0(s) (SOCK0_BASE_ADDR + (s*SOCKn_REG_SIZE) + 0x0022) //Sn_TX_RD0 register - Socket n TX Read pointer
+#define Sn_TX_WR0(s) (SOCK0_BASE_ADDR + (s*SOCKn_REG_SIZE) + 0x0024) //Sn_TX_WR0 register - Socket n TX Write pointer
+#define Sn_RX_RSR0(s)(SOCK0_BASE_ADDR + (s*SOCKn_REG_SIZE) + 0x0026) //Sn_RX_RSR0 register - Socket n Received size
+#define Sn_RX_RD0(s) (SOCK0_BASE_ADDR + (s*SOCKn_REG_SIZE) + 0x0028) //Sn_RX_RD0 register - Socket n RX Read pointer
 
-#define Sn_TX_FSR0	0x0020 //Socket 0 TX Free Size
-#define Sn_TX_FSR1	0x0021
+#define SOCK_CONNECTED(im) 		((im & 0x1))
+#define SOCK_DISCONNECTED(im) 	((im & 0x2))
+#define SOCK_DATA_RECV(im) 		((im & 0x4))
+#define SOCK_TIMEOUT(im) 		((im & 0x8))
+#define SOCK_DATA_SENT(im) 		((im & 0x10))
 
 typedef enum _W5100_SocketStatus {
 	BUS_ERROR			= -1,
@@ -97,7 +105,7 @@ typedef enum _W5100_SockProto_TypeDef {
 
 typedef struct _W5100_Socket_TypeDef {
 	W5100_Handle_TypeDef *hw5100;
-	uint8_t _socketnum; 					// W5100 socket number. This automatically computer by library
+	uint8_t _socketnum; 					// W5100 socket number. This automatically computed by library
 	W5100_SockConnMode_TypeDef connmode; 	// Socket connection mode (CLIENT/SERVER)
 	uint16_t destportnum;
 	uint16_t srcportnum;
@@ -106,15 +114,23 @@ typedef struct _W5100_Socket_TypeDef {
 
 } W5100_Socket_TypeDef;
 
+extern W5100_Handle_TypeDef _hw5100;
+
 /* Private functions */
-W5100_StatusTypeDef __W5100_SocketFreeTXMEM(W5100_Socket_TypeDef *hsock, uint16_t *fmem);
+uint16_t __W5100_SocketFreeTXMEM(uint8_t sock);
 W5100_SocketStatus_TypeDef __W5100_SocketStatus(W5100_Handle_TypeDef *hw5100, uint8_t socknum);
 W5100_StatusTypeDef __W5100_SocketOpen(W5100_Socket_TypeDef *hsock);
 
-W5100_StatusTypeDef W5100_SocketConnect(W5100_Socket_TypeDef *hsock);
-W5100_StatusTypeDef W5100_SocketInit(W5100_Socket_TypeDef *hsock);
-W5100_StatusTypeDef W5100_SocketInterruptStatus(W5100_Socket_TypeDef *hsock);
-W5100_StatusTypeDef W5100_SocketStatus(W5100_Socket_TypeDef *hsock, W5100_SocketStatus_TypeDef *status);
+int8_t accept(uint8_t sock);
+int8_t bind(uint8_t sock, uint8_t *ip, uint16_t port);
+int close(int sock);
+//int close(uint8_t sock);
+int8_t connect(uint8_t sock);
+int8_t socket(uint8_t domain, uint8_t type, uint8_t protocol);
+int8_t listen(uint8_t sock, uint8_t backlog) ;
+int16_t recv(uint8_t sock, uint8_t *buf, uint16_t len, uint8_t flags);
+int8_t send(uint8_t sock, uint8_t *buf, uint16_t len);
+int8_t W5100_SocketStatus(uint8_t socket);
 
 
 #endif //#ifndef _W5100_STM32_SOCKET_H__

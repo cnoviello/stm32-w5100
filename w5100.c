@@ -27,6 +27,7 @@ THE SOFTWARE.
 #include <string.h>
 
 UART_HandleTypeDef *ghuart;
+W5100_Handle_TypeDef _hw5100;
 
 void W5100_UART_Debug_Init(UART_HandleTypeDef *huart) {
 	ghuart = huart;
@@ -39,50 +40,55 @@ void W5100_UART_Debug_Print(char *msg) {
 #endif //#ifdef DEBUG
 
 
-W5100_StatusTypeDef W5100_GetGWIP(W5100_Handle_TypeDef *hw5100, uint8_t *ip) {
+W5100_StatusTypeDef W5100_GetGWIP(uint8_t *ip) {
 	W5100_StatusTypeDef retval;
 
 	for(uint16_t addr = GWIP_ADDR_REG; addr <= GWIP_ADDR_REG + GWIP_ADDR_LEN; addr++)
-		retval |= W5100_Read(hw5100, addr, ip++);
+		retval |= W5100_Read(addr, ip++);
 
 	return retval;
 
 }
 
-W5100_StatusTypeDef W5100_GetIP(W5100_Handle_TypeDef *hw5100, uint8_t *ip) {
+W5100_StatusTypeDef W5100_GetIP(uint8_t *ip) {
 	W5100_StatusTypeDef retval;
 
 	for(uint8_t addr = IP_ADDR_REG; addr <= IP_ADDR_REG + IP_ADDR_LEN; addr++)
-		retval |= W5100_Read(hw5100, addr, ip++);
+		retval |= W5100_Read(addr, ip++);
 
 	return retval;
 
 }
 
-W5100_StatusTypeDef W5100_GetMAC(W5100_Handle_TypeDef *hw5100, uint8_t *mac) {
+W5100_StatusTypeDef W5100_GetMAC(uint8_t *mac) {
 	W5100_StatusTypeDef retval;
 
 	for(uint8_t addr = MAC_ADDR_REG; addr <= MAC_ADDR_REG + MAC_ADDR_LEN; addr++)
-		retval |= W5100_Read(hw5100, addr, mac++);
+		retval |= W5100_Read(addr, mac++);
 }
 
-W5100_StatusTypeDef W5100_GetNetMask(W5100_Handle_TypeDef *hw5100, uint8_t *nm) {
+W5100_StatusTypeDef W5100_GetNetMask(uint8_t *nm) {
 	W5100_StatusTypeDef retval;
 
 	for(uint8_t addr = NET_MASK_REG; addr <= NET_MASK_REG + NET_MASK_LEN; addr++)
-		retval |= W5100_Read(hw5100, addr, nm++);
+		retval |= W5100_Read(addr, nm++);
 }
 
 W5100_StatusTypeDef W5100_Init(W5100_Handle_TypeDef *hw5100) {
 	W5100_StatusTypeDef retval;
 
-    retval = W5100_SetIP(hw5100) &&
-    		 W5100_SetNetMask(hw5100) &&
-			 W5100_SetGWIP(hw5100) &&
-			 W5100_SetMAC(hw5100);
+	/* FIXME: aggiungere i sanity checks */
+	memcpy((uint8_t*)&_hw5100, (uint8_t*)hw5100, sizeof(W5100_Handle_TypeDef));
 
-    retval |= W5100_Write(hw5100, 0x001A, 0x55); //FIXME: MEMORIA SOCKET, CAMBIARE
-    retval |= W5100_Write(hw5100, 0x001B, 0x55); //FIXME: MEMORIA SOCKET, CAMBIARE
+    retval = W5100_SetIP(_hw5100) &&
+    		 W5100_SetNetMask(_hw5100) &&
+			 W5100_SetGWIP(_hw5100) &&
+			 W5100_SetMAC(_hw5100);
+
+    retval |= W5100_Write(0x001A, 0x55); //FIXME: MEMORIA SOCKET, CAMBIARE
+    retval |= W5100_Write(0x001B, 0x55); //FIXME: MEMORIA SOCKET, CAMBIARE
+
+
 
     return retval;
 }
@@ -97,67 +103,67 @@ W5100_StatusTypeDef W5100_Init(W5100_Handle_TypeDef *hw5100) {
   * @param  Timeout: Timeout duration
   * @retval HAL status
   */
-W5100_StatusTypeDef W5100_Write(W5100_Handle_TypeDef *hw5100, uint16_t regaddr, uint8_t data) {
+W5100_StatusTypeDef W5100_Write(uint16_t regaddr, uint8_t data) {
 	  HAL_StatusTypeDef status = HAL_OK;
 
 	  /* Every W5100 write command starts with 0xF0 byte, followed by the register address (2 bytes) and data (1 byte) */
 	  uint8_t buf[] = {0xF0, regaddr >> 8, regaddr, data};
 
-	  HAL_GPIO_WritePin(hw5100->ssGPIOx, hw5100->ssGPIOpin, GPIO_PIN_RESET); //CS LOW
-	  status = HAL_SPI_Transmit(hw5100->hspi, buf, 4, 0xFFFFFFFF);
-	  HAL_GPIO_WritePin(hw5100->ssGPIOx, hw5100->ssGPIOpin, GPIO_PIN_SET); //CS HIGH
+	  HAL_GPIO_WritePin(_hw5100.ssGPIOx, _hw5100.ssGPIOpin, GPIO_PIN_RESET); //CS LOW
+	  status = HAL_SPI_Transmit(_hw5100.hspi, buf, 4, 0xFFFFFFFF);
+	  HAL_GPIO_WritePin(_hw5100.ssGPIOx, _hw5100.ssGPIOpin, GPIO_PIN_SET); //CS HIGH
 
 	  return status;
 }
 
-W5100_StatusTypeDef W5100_Read(W5100_Handle_TypeDef *hw5100, uint16_t regaddr, uint8_t *data) {
+W5100_StatusTypeDef W5100_Read(uint16_t regaddr, uint8_t *data) {
 	  HAL_StatusTypeDef status = HAL_OK;
 
 	  /* Every W5100 read command starts with 0x0F byte, followed by the register address (2 bytes) and data (1 byte) */
 	  uint8_t wbuf[] = {0x0F, regaddr >> 8, regaddr, 0x0};
 	  uint8_t rbuf[4];
 
-	  HAL_GPIO_WritePin(hw5100->ssGPIOx, hw5100->ssGPIOpin, GPIO_PIN_RESET); //CS LOW
-	  status = HAL_SPI_TransmitReceive(hw5100->hspi, wbuf, rbuf, 4, 0xFFFFFFFF);
-	  HAL_GPIO_WritePin(hw5100->ssGPIOx, hw5100->ssGPIOpin, GPIO_PIN_SET); //CS HIGH
+	  HAL_GPIO_WritePin(_hw5100.ssGPIOx, _hw5100.ssGPIOpin, GPIO_PIN_RESET); //CS LOW
+	  status = HAL_SPI_TransmitReceive(_hw5100.hspi, wbuf, rbuf, 4, 0xFFFFFFFF);
+	  HAL_GPIO_WritePin(_hw5100.ssGPIOx, _hw5100.ssGPIOpin, GPIO_PIN_SET); //CS HIGH
 
 	  *data = rbuf[3];
 	  return status;
 }
 
 
-W5100_StatusTypeDef W5100_SetGWIP(W5100_Handle_TypeDef *hw5100) {
+W5100_StatusTypeDef W5100_SetGWIP() {
 	W5100_StatusTypeDef retval;
 
 	for(uint16_t addr = GWIP_ADDR_REG; addr <= GWIP_ADDR_REG + GWIP_ADDR_LEN; addr++)
-		retval |= W5100_Write(hw5100, addr, hw5100->gw[addr - GWIP_ADDR_REG]);
+		retval |= W5100_Write(addr, _hw5100.gw[addr - GWIP_ADDR_REG]);
 
 	return retval;
 }
 
-W5100_StatusTypeDef W5100_SetIP(W5100_Handle_TypeDef *hw5100) {
+W5100_StatusTypeDef W5100_SetIP() {
 	W5100_StatusTypeDef retval;
 
 	for(uint16_t addr = IP_ADDR_REG; addr <= IP_ADDR_REG + IP_ADDR_LEN; addr++)
-		retval |= W5100_Write(hw5100, addr, hw5100->ip[addr - IP_ADDR_REG]);
+		retval |= W5100_Write(addr, _hw5100.ip[addr - IP_ADDR_REG]);
 
 	return retval;
 }
 
-W5100_StatusTypeDef W5100_SetMAC(W5100_Handle_TypeDef *hw5100) {
+W5100_StatusTypeDef W5100_SetMAC() {
 	W5100_StatusTypeDef retval;
 
 	for(uint16_t addr = MAC_ADDR_REG; addr <= MAC_ADDR_REG + MAC_ADDR_LEN; addr++)
-		retval |= W5100_Write(hw5100, addr, hw5100->mac[addr - MAC_ADDR_REG]);
+		retval |= W5100_Write(addr, _hw5100.mac[addr - MAC_ADDR_REG]);
 
 	return retval;
 }
 
-W5100_StatusTypeDef W5100_SetNetMask(W5100_Handle_TypeDef *hw5100) {
+W5100_StatusTypeDef W5100_SetNetMask() {
 	W5100_StatusTypeDef retval;
 
 	for(uint16_t addr = NET_MASK_REG; addr <= NET_MASK_REG + NET_MASK_LEN; addr++)
-		retval |= W5100_Write(hw5100, addr, hw5100->nm[addr - NET_MASK_REG]);
+		retval |= W5100_Write(addr, _hw5100.nm[addr - NET_MASK_REG]);
 
 	return retval;
 }

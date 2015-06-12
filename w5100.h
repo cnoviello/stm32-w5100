@@ -67,7 +67,9 @@ typedef enum _W5100_StatusTypeDef
   W5100_BUSY     			= 0x02,
   W5100_TIMEOUT	 			= 0x03,
   W5100_NOFREESOCK			= 0x04, // No available free socket
-  W5100_SOCK_AREADY_OPENED	= 0x05  // Socket already opened
+  W5100_SOCK_AREADY_OPENED	= 0x05, // Socket already opened
+  W5100_CONN_RESET			= 0x06, // Connection reset
+  W5100_SOCK_CLOSED			= 0x07  // Socket closed
 } W5100_StatusTypeDef;
 
 typedef struct _W5100_Handle_TypeDef {
@@ -81,17 +83,17 @@ typedef struct _W5100_Handle_TypeDef {
 	uint8_t *nm;
 } W5100_Handle_TypeDef;
 
-W5100_StatusTypeDef W5100_GetGWIP(W5100_Handle_TypeDef *hw5100, uint8_t *ip);
-W5100_StatusTypeDef W5100_GetIP(W5100_Handle_TypeDef *hw5100, uint8_t *ip);
-W5100_StatusTypeDef W5100_GetMAC(W5100_Handle_TypeDef *hw5100, uint8_t *mac);
-W5100_StatusTypeDef W5100_GetNetMask(W5100_Handle_TypeDef *hw5100, uint8_t *nm);
+W5100_StatusTypeDef W5100_GetGWIP(uint8_t *ip);
+W5100_StatusTypeDef W5100_GetIP(uint8_t *ip);
+W5100_StatusTypeDef W5100_GetMAC(uint8_t *mac);
+W5100_StatusTypeDef W5100_GetNetMask(uint8_t *nm);
 W5100_StatusTypeDef W5100_Init(W5100_Handle_TypeDef *hw5100);
-W5100_StatusTypeDef W5100_Read(W5100_Handle_TypeDef *hw5100, uint16_t regaddr, uint8_t *data);
-W5100_StatusTypeDef W5100_Write(W5100_Handle_TypeDef *hw5100, uint16_t regaddr, uint8_t data);
-W5100_StatusTypeDef W5100_SetGWIP(W5100_Handle_TypeDef *hw5100);
-W5100_StatusTypeDef W5100_SetIP(W5100_Handle_TypeDef *hw5100);
-W5100_StatusTypeDef W5100_SetMAC(W5100_Handle_TypeDef *hw5100);
-W5100_StatusTypeDef W5100_SetNetMask(W5100_Handle_TypeDef *hw5100);
+W5100_StatusTypeDef W5100_Read(uint16_t regaddr, uint8_t *data);
+W5100_StatusTypeDef W5100_Write(uint16_t regaddr, uint8_t data);
+W5100_StatusTypeDef W5100_SetGWIP();
+W5100_StatusTypeDef W5100_SetIP();
+W5100_StatusTypeDef W5100_SetMAC();
+W5100_StatusTypeDef W5100_SetNetMask();
 
 #ifdef DEBUG
 void W5100_UART_Debug_Init(UART_HandleTypeDef *huart);
